@@ -1,8 +1,9 @@
 // 設定を.envからロード
-require("dotenv").config();
-import line from "line/bot-sdk";
-import crypt from "crypto";
-import dialogflow from "dialogflow";
+//require("dotenv").config();
+const line = require("@line/bot-sdk");
+const crypt = require("crypto");
+const dialogflow = require("dialogflow");
+
 
 const lineConfig = {
   channelSecret: process.env.LINE_CHANNELSECRET,
@@ -15,17 +16,11 @@ const dialogflowConfig = {
   privateKey: process.env.DIALOGFLOW_PRIVATEKEY
 };
 
-const dialogflowClient = new dialogflow.SessionClinet({
-  project_id: dialogflowConfig.projectId,
-  credentials: {
-    client_email: dialogflowClient.serviceAccount,
-    private_key: dialogflowClient.private_key
-  }
-});
+const dialogflowClient = new dialogflow.SessionsClient();
 
 const verifySignature = event => {
   // CHANNELSECRETを秘密鍵として、event.body部をもとにHmacのハッシュ値を取得する。
-  let signature = crypto
+  let signature = crypt
     .createHmac("sha256", lineConfig.channelSecret)
     .update(event.body)
     .digest("base64");
@@ -35,20 +30,24 @@ const verifySignature = event => {
 };
 
 const postDialogFlow = event => {
-  session_client
-    .detectIntent({
-      session: session_client.sessionPath(
-        dialogflowConfig.projectId,
-        event.source.userId
-      ),
-      queryInput: {
-        text: {
-          text: event.message.text,
-          languageCode: "ja"
-        }
+  console.log(event)
+  const request = {
+    session: dialogflowClient.sessionPath(
+      dialogflowConfig.projectId,
+      event.source.userId
+    ),
+    queryInput: {
+      text: {
+        text: event.message.text,
+        languageCode: "ja"
       }
-    })
+    }
+  }
+  console.log(request);
+  dialogflowClient
+    .detectIntent(request)
     .then(responses => {
+      console.log("dialogFlow" + response);
       if (
         responses[0].queryResult &&
         responses[0].queryResult.action == "handle-delivery-order"
@@ -68,8 +67,9 @@ const postDialogFlow = event => {
 
 exports.handler = function(event, context) {
   "use strict";
-
+  console.log("start lambda");
   if (!verifySignature(event)) {
+    console.log("no signature");
     return;
   }
 
@@ -82,6 +82,7 @@ exports.handler = function(event, context) {
 
   if (body.events[0].replyToken === "00000000000000000000000000000000") {
     //接続確認エラー回避
+    console.log("error kaihi");
     const lambdaResponse = {
       statusCode: 200,
       headers: { "X-Line-Status": "OK" },
@@ -90,27 +91,28 @@ exports.handler = function(event, context) {
     context.succeed(lambdaResponse);
     return;
   }
-
-  if (event.type !== "message" || event.message.type !== "text") {
-    console.log("no message");
-    return;
-  }
-
-  const text = postDialogFlow(event);
-  //const text = body.events.message.text;
-  const message = {
-    type: "text",
-    text: text
-  };
-  client
-    .replyMessage(body.events[0].replyToken, message)
-    .then(response => {
-      let lambdaResponse = {
-        statusCode: 200,
-        headers: { "X-Line-Status": "OK" },
-        body: '{"result":"completed"}'
-      };
-      context.succeed(lambdaResponse);
-    })
-    .catch(err => console.log(err));
+  console.log(event);
+  body.events.forEach((event) => {
+    if (event.type !== "message" || event.message.type !== "text") {
+      console.log("no message");
+      return;
+    }
+    const text = postDialogFlow(event);
+    //const text = body.events.message.text;
+    const message = {
+      type: "text",
+      text: text
+    };
+    client
+      .replyMessage(body.events[0].replyToken, message)
+      .then(response => {
+        let lambdaResponse = {
+          statusCode: 200,
+          headers: { "X-Line-Status": "OK" },
+          body: '{"result":"completed"}'
+        };
+        context.succeed(lambdaResponse);
+      })
+      .catch(err => console.log(err));
+  })  
 };
