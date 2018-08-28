@@ -1,5 +1,5 @@
 // 設定を.envからロード
-//require("dotenv").config();
+require("dotenv").config();
 const line = require("@line/bot-sdk");
 const crypt = require("crypto");
 const dialogflow = require("dialogflow");
@@ -16,7 +16,13 @@ const dialogflowConfig = {
   privateKey: process.env.DIALOGFLOW_PRIVATEKEY
 };
 
-const dialogflowClient = new dialogflow.SessionsClient();
+const dialogflowClient = new dialogflow.SessionsClient({
+  project_id: dialogflowConfig.projectId,
+  credentials: {
+    client_email: dialogflowConfig.serviceAccount,
+    private_key: dialogflowConfig.privateKey
+  }
+});
 
 const verifySignature = event => {
   // CHANNELSECRETを秘密鍵として、event.body部をもとにHmacのハッシュ値を取得する。
@@ -67,6 +73,7 @@ const postDialogFlow = event => {
 
 exports.handler = function(event, context) {
   "use strict";
+  console.log("automation");
   console.log("start lambda");
   if (!verifySignature(event)) {
     console.log("no signature");
