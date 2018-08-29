@@ -1,9 +1,8 @@
 // 設定を.envからロード
-require("dotenv").config();
+//require("dotenv").config();
 const line = require("@line/bot-sdk");
 const crypt = require("crypto");
 const dialogflow = require("dialogflow");
-
 
 const lineConfig = {
   channelSecret: process.env.LINE_CHANNELSECRET,
@@ -36,7 +35,7 @@ const verifySignature = event => {
 };
 
 const postDialogFlow = event => {
-  console.log(event)
+  console.log("postDialogFlow");
   const request = {
     session: dialogflowClient.sessionPath(
       dialogflowConfig.projectId,
@@ -48,12 +47,12 @@ const postDialogFlow = event => {
         languageCode: "ja"
       }
     }
-  }
-  console.log(request);
+  };
+
   dialogflowClient
     .detectIntent(request)
     .then(responses => {
-      console.log("dialogFlow" + response);
+      console.log("detectIntent");
       if (
         responses[0].queryResult &&
         responses[0].queryResult.action == "handle-delivery-order"
@@ -66,14 +65,30 @@ const postDialogFlow = event => {
         } else {
           message_text = `毎度！ご注文は？`;
         }
-        return message_text;
+        console.log("LINE START");
+        const message = {
+          type: "text",
+          text: message_text
+        };
+        client
+          .replyMessage(body.events[0].replyToken, message)
+          .then(response => {
+            let lambdaResponse = {
+              statusCode: 200,
+              headers: { "X-Line-Status": "OK" },
+              body: '{"result":"completed"}'
+            };
+            context.succeed(lambdaResponse);
+          });
       }
+    })
+    .catch(err => {
+      console.error("ERROR", err);
     });
 };
 
 exports.handler = function(event, context) {
   "use strict";
-  console.log("automation");
   console.log("start lambda");
   if (!verifySignature(event)) {
     console.log("no signature");
@@ -98,28 +113,17 @@ exports.handler = function(event, context) {
     context.succeed(lambdaResponse);
     return;
   }
-  console.log(event);
-  body.events.forEach((event) => {
+  let events_processed = [];
+
+  body.events.forEach(event => {
     if (event.type !== "message" || event.message.type !== "text") {
       console.log("no message");
       return;
     }
-    const text = postDialogFlow(event);
-    //const text = body.events.message.text;
-    const message = {
-      type: "text",
-      text: text
-    };
-    client
-      .replyMessage(body.events[0].replyToken, message)
-      .then(response => {
-        let lambdaResponse = {
-          statusCode: 200,
-          headers: { "X-Line-Status": "OK" },
-          body: '{"result":"completed"}'
-        };
-        context.succeed(lambdaResponse);
-      })
-      .catch(err => console.log(err));
-  })  
+    events_processed.push(postDialogFlow(event));
+  });
+
+  Promise.all(events_processed).then(response => {
+    console.log(`${response.length} event(s) processed.`);
+  });
 };
