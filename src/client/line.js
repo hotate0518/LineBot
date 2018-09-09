@@ -32,11 +32,9 @@ const verifySignature = (event) => {
   return signature === header;
 };
 
-// 非同期処理の結果をresolveにわたすと、then()で受け取れる
-const execute = param => new Promise((resolve) => {
+const execute = async (param) => {
   console.log('Start Line Promise');
-  resolve(dialogFlow.postDialogFlow(param));
-}).then((result) => {
+  const result = await dialogFlow.postDialogFlow(param);
   console.log(`DialogFlow result: ${result}`);
   if (result === null) {
     return;
@@ -46,7 +44,7 @@ const execute = param => new Promise((resolve) => {
     text: result,
   };
   lineClient.replyMessage(param.replyToken, message);
-});
+};
 
 exports.main = (event, context) => {
   if (!verifySignature(event)) {
