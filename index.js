@@ -9,6 +9,10 @@ const lineConfig = {
   channelAccessToken: process.env.LINE_ACCESSTOKEN
 };
 
+const lineClient = new line.Client({
+  channelAccessToken: lineConfig.channelAccessToken
+});
+
 const dialogflowConfig = {
   projectId: process.env.DIALOGFLOW_PROJECT_ID,
   serviceAccount: process.env.DIALOGFLOW_SERVICEACCOUNT,
@@ -19,7 +23,7 @@ const dialogflowClient = new dialogflow.SessionsClient({
   project_id: dialogflowConfig.projectId,
   credentials: {
     client_email: dialogflowConfig.serviceAccount,
-    private_key: dialogflowConfig.privateKey
+    private_key: dialogflowConfig.privateKey.replace(/\\n/g, "\n")
   }
 });
 
@@ -34,8 +38,9 @@ const verifySignature = event => {
   return signature === header;
 };
 
-const postDialogFlow = event => {
+const postDialogFlow = (event) => {
   console.log("postDialogFlow");
+  console.log(event);
   const request = {
     session: dialogflowClient.sessionPath(
       dialogflowConfig.projectId,
@@ -52,35 +57,28 @@ const postDialogFlow = event => {
   dialogflowClient
     .detectIntent(request)
     .then(responses => {
-      console.log("detectIntent");
-      if (
-        responses[0].queryResult &&
-        responses[0].queryResult.action == "handle-delivery-order"
-      ) {
-        let message_text;
-        if (responses[0].queryResult.parameters.fields.menu.stringValue) {
-          message_text = `毎度！${
-            responses[0].queryResult.parameters.fields.menu.stringValue
-          }ね。どちらにお届けしましょ？`;
-        } else {
-          message_text = `毎度！ご注文は？`;
-        }
-        console.log("LINE START");
-        const message = {
-          type: "text",
-          text: message_text
-        };
-        client
-          .replyMessage(body.events[0].replyToken, message)
-          .then(response => {
-            let lambdaResponse = {
-              statusCode: 200,
-              headers: { "X-Line-Status": "OK" },
-              body: '{"result":"completed"}'
-            };
-            context.succeed(lambdaResponse);
-          });
+      console.log("Detect Intent");
+      const result = responses[0].queryResult;
+      console.log(`Query: ${result.QueryText}`);
+      console.log(`Response: ${result.fulfillmentText}`);
+      if (!result.intent) {
+        console.log(`  No intent matched.`);
+        return;
       }
+      console.log(`Intent: ${result.intent.displayName}`);
+      console.log("LINE START");
+      const message = {
+        type: "text",
+        text: result.fulfillmentText
+      };
+      lineClient.replyMessage(event.replyToken, message).then(response => {
+        let lambdaResponse = {
+          statusCode: 200,
+          headers: { "X-Line-Status": "OK" },
+          body: '{"result":"completed"}'
+        };
+        context.succeed(lambdaResponse);
+      });
     })
     .catch(err => {
       console.error("ERROR", err);
@@ -89,15 +87,11 @@ const postDialogFlow = event => {
 
 exports.handler = function(event, context) {
   "use strict";
-  console.log("start lambda");
+  console.log(dialogflowConfig);
   if (!verifySignature(event)) {
     console.log("no signature");
     return;
   }
-
-  const client = new line.Client({
-    channelAccessToken: lineConfig.channelAccessToken
-  });
 
   const body = JSON.parse(event.body);
   //ハッシュと、ヘッダの値を比較し、一致した場合のみ処理を行う。（一致した場合→LINEサーバかどうかの認証成功）
@@ -120,6 +114,7 @@ exports.handler = function(event, context) {
       console.log("no message");
       return;
     }
+
     events_processed.push(postDialogFlow(event));
   });
 
