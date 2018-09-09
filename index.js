@@ -42,6 +42,7 @@ const verifySignature = (event) => {
     .digest('base64');
   // LINEサーバから送られたHeaderの値を取得する。
   const header = (event.headers || {})['X-Line-Signature'];
+  // headerの値と、取得したハッシュ値が一致した場合、受信先がLINEサーバであると判定する。
   return signature === header;
 };
 
@@ -97,6 +98,7 @@ exports.handler = (event, context) => {
   }
   const eventsProcessed = [];
   body.events.forEach((params) => {
+    console.log(`LINE Message Body: ${JSON.stringify(params, null, 4)}`);
     if (params.type !== 'message' || params.message.type !== 'text') {
       console.log('no message');
       return;
