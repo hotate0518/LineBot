@@ -47,7 +47,6 @@ const verifySignature = (event) => {
 };
 
 const postDialogFlow = (event) => {
-  console.log(`postDialogFlow: ${JSON.stringify(event, null, 4)}`);
   const request = {
     session: dialogflowClient.sessionPath(dialogflowConfig.projectId, event.source.userId),
     queryInput: {
