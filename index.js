@@ -68,14 +68,11 @@ const postDialogFlow = (event) => {
         console.log('  No intent matched.');
         return;
       }
-      console.log('LINE START');
       const message = {
         type: 'text',
         text: result.fulfillmentText,
       };
-      lineClient.replyMessage(event.replyToken, message).then((context) => {
-        context.succeed(lambdaResponse);
-      });
+      lineClient.replyMessage(event.replyToken, message);
     })
     .catch((err) => {
       console.error('ERROR', err);
@@ -83,11 +80,11 @@ const postDialogFlow = (event) => {
 };
 
 exports.handler = (event, context) => {
+  console.log(`LINE Message Received: ${JSON.stringify(event, null, 4)}`);
   if (!verifySignature(event)) {
     console.log('no signature');
     return;
   }
-
   const body = JSON.parse(event.body);
   // ハッシュと、ヘッダの値を比較し、一致した場合のみ処理を行う。（一致した場合→LINEサーバかどうかの認証成功）
   if (body.events[0].replyToken === '00000000000000000000000000000000') {
