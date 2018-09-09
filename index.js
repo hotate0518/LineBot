@@ -79,6 +79,8 @@ const postDialogFlow = (event) => {
     });
 };
 
+// event: 受信パラメータ
+// context AWS lambdaで使用する様々なパラメータ。
 exports.handler = (event, context) => {
   console.log(`LINE Message Received: ${JSON.stringify(event, null, 4)}`);
   if (!verifySignature(event)) {
