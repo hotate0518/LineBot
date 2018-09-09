@@ -20,9 +20,9 @@ exports.handler = (event, context) => {
   if (assign === null) {
     console.log('No match service');
   }
-  console.log('Service Start');
+  console.log(`Service[${assign}] start`);
   eventsProcessed.push(services.assignService[assign](event, context));
   Promise.all(eventsProcessed).then(() => {
-    console.log('aiueo');
+    console.log(`Service[${assign}] complete`);
   });
 };
