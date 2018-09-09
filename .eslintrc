@@ -1,7 +1,6 @@
 {
   "extends": "airbnb",
   "rules": {
-    "no-undef": "off",
     "linebreak-style": ["error", "windows"],
     "no-console": "off"
   }

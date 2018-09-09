@@ -27,6 +27,13 @@ const dialogflowClient = new dialogflow.SessionsClient({
   },
 });
 
+// LINEへのレスポンス情報
+const lambdaResponse = {
+  statusCode: 200,
+  headers: { 'X-Line-Status': 'OK' },
+  body: '{"result":"connect check"}',
+};
+
 const verifySignature = (event) => {
   // CHANNELSECRETを秘密鍵として、event.body部をもとにHmacのハッシュ値を取得する。
   const signature = crypt
@@ -39,8 +46,7 @@ const verifySignature = (event) => {
 };
 
 const postDialogFlow = (event) => {
-  console.log('postDialogFlow');
-  console.log(event);
+  console.log(`postDialogFlow: ${JSON.stringify(event, null, 4)}`);
   const request = {
     session: dialogflowClient.sessionPath(dialogflowConfig.projectId, event.source.userId),
     queryInput: {
@@ -54,26 +60,20 @@ const postDialogFlow = (event) => {
   dialogflowClient
     .detectIntent(request)
     .then((responses) => {
-      console.log('Detect Intent');
+      console.log(`Detect Intent: ${JSON.stringify(responses, null, 4)}`);
       const result = responses[0].queryResult;
-      console.log(`Query: ${result.QueryText}`);
-      console.log(`Response: ${result.fulfillmentText}`);
+      console.log(`QueryText: ${result.queryText}`);
+      console.log(`ResponseText: ${result.fulfillmentText}`);
       if (!result.intent) {
         console.log('  No intent matched.');
         return;
       }
-      console.log(`Intent: ${result.intent.displayName}`);
       console.log('LINE START');
       const message = {
         type: 'text',
         text: result.fulfillmentText,
       };
-      lineClient.replyMessage(event.replyToken, message).then(() => {
-        const lambdaResponse = {
-          statusCode: 200,
-          headers: { 'X-Line-Status': 'OK' },
-          body: '{"result":"completed"}',
-        };
+      lineClient.replyMessage(event.replyToken, message).then((context) => {
         context.succeed(lambdaResponse);
       });
     })
@@ -83,7 +83,6 @@ const postDialogFlow = (event) => {
 };
 
 exports.handler = (event, context) => {
-  console.log(dialogflowConfig);
   if (!verifySignature(event)) {
     console.log('no signature');
     return;
@@ -91,20 +90,13 @@ exports.handler = (event, context) => {
 
   const body = JSON.parse(event.body);
   // ハッシュと、ヘッダの値を比較し、一致した場合のみ処理を行う。（一致した場合→LINEサーバかどうかの認証成功）
-
   if (body.events[0].replyToken === '00000000000000000000000000000000') {
-    // 接続確認エラー回避
-    console.log('error kaihi');
-    const lambdaResponse = {
-      statusCode: 200,
-      headers: { 'X-Line-Status': 'OK' },
-      body: '{"result":"connect check"}',
-    };
+    // LINE Developer画面で行える「接続確認」を押下した場合に通る
+    console.log('接続確認');
     context.succeed(lambdaResponse);
     return;
   }
   const eventsProcessed = [];
-
   body.events.forEach((params) => {
     if (params.type !== 'message' || params.message.type !== 'text') {
       console.log('no message');
