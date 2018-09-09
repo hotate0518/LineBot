@@ -1,6 +1,3 @@
-// 設定を.envからロード
-// require("dotenv").config();
-
 // Node.jsではimport文は対応していない？
 const services = require('./src/services');
 
