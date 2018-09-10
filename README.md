@@ -1,3 +1,20 @@
 # READ ME
+
 ## 概要
-DialogFlowと各種クライアントサービス（LINE等）を連携する
+
+DialogFlow と各種クライアントサービス（LINE 等）を連携する
+
+## 実装方針
+
+1. services.js に以下のオブジェクトを登録する。
+
+- name
+  - サービス名
+- assign
+  - そのサービスからのリクエストだと判定するチェックメソッド
+- service
+  - サービスのメインロジック
+
+1. src/client フォルダ配下に、各種サービスを実装する。
+
+1. dialogflow.js を require し、postDialogFlow()を使用することで、DialogFlow に質問を投げかけ、応答を得ることが可能
