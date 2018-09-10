@@ -17,4 +17,6 @@ DialogFlow と各種クライアントサービス（LINE 等）を連携する
 
 ### src/client フォルダ配下に、各種サービスを実装する。
 
-### dialogflow.js を require し、postDialogFlow()を使用することで、DialogFlow に質問を投げかけ、応答を得ることが可能
+### dialogflow.js 使用方法
+
+require し、postDialogFlow()を使用することで、DialogFlow に質問を投げかけ、応答を得ることが可能
