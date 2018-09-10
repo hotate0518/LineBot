@@ -20,7 +20,11 @@ const lambdaResponse = {
   body: '{"result":"connect check"}',
 };
 
-const verifySignature = (event) => {
+exports.assignService = (event) => {
+  if (!event || !event.headers || !event.body) {
+    console.log('No LINE');
+    return false;
+  }
   // CHANNELSECRETを秘密鍵として、event.body部をもとにHmacのハッシュ値を取得する。
   const signature = crypt
     .createHmac('sha256', lineConfig.channelSecret)
@@ -47,10 +51,6 @@ const execute = async (param) => {
 };
 
 exports.main = (event, context) => {
-  if (!verifySignature(event)) {
-    console.log('no signature');
-    return;
-  }
   const body = JSON.parse(event.body);
   // ハッシュと、ヘッダの値を比較し、一致した場合のみ処理を行う。（一致した場合→LINEサーバかどうかの認証成功）
   if (body.events[0].replyToken === '00000000000000000000000000000000') {
