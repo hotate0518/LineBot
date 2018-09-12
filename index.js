@@ -10,7 +10,6 @@ exports.handler = (event, context) => {
   console.log(`event received: ${JSON.stringify(event, null, 4)}`);
 
   // 適合するサービスを選択する。
-  console.log(services);
   const selectedService = services.defined.find(service => service.assign(event));
   if (!selectedService) {
     console.log('No match service');

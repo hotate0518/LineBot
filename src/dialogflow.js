@@ -1,5 +1,3 @@
-// 設定を.envからロード
-// require('dotenv').config();
 const dialogflow = require('dialogflow');
 
 const dialogflowConfig = {

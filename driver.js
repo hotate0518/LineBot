@@ -1,3 +1,4 @@
+require('dotenv').config();
 const index = require('./index.js');
 
 const event = {

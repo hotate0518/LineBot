@@ -1,6 +1,3 @@
-// 設定を.envからロード
-// require("dotenv").config();
-
 const line = require('@line/bot-sdk');
 const crypt = require('crypto');
 const dialogFlow = require('../dialogflow');
