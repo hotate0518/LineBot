@@ -1,6 +1,6 @@
 const line = require('@line/bot-sdk');
 const crypt = require('crypto');
-const dialogFlow = require('../dialogflow');
+const dialogFlow = require('../service/dialogflow');
 
 const lineConfig = {
   channelSecret: process.env.LINE_CHANNELSECRET,
