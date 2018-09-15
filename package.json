@@ -1,5 +1,5 @@
 {
-  "name": "LineBot",
+  "name": "linebot",
   "version": "1.0.0",
   "description": "",
   "main": "driver.js",
