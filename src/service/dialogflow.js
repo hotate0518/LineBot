@@ -39,7 +39,7 @@ exports.postDialogFlow = async (query, sessionId) => {
         return;
       }
       console.log(result.action);
-      // DialogFlowで判別できない場合、responses.queryResult.actionがこの値になる。
+      // DialogFlowで判別できない場合、responses.queryResult.actionがinput.unknownになる。
       if (result.action === 'input.unknown') {
         message = await naturalDialogue.main(query);
       } else {

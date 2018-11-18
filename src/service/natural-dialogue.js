@@ -1,3 +1,5 @@
+// 雑談するサービス
+
 const axios = require('axios');
 
 const naturalDialogueConfig = {
@@ -36,6 +38,6 @@ exports.main = async (query) => {
     });
 
   console.log(response);
-  console.log(response.data.systemText.expression);
+  console.log(`雑談: ${response.data.systemText.expression}`);
   return response.data.systemText.expression;
 };
