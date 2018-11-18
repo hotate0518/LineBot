@@ -1,4 +1,5 @@
 const dialogflow = require('dialogflow');
+const naturalDialogue = require('./natural-dialogue');
 
 const dialogflowConfig = {
   projectId: process.env.DIALOGFLOW_PROJECT_ID,
@@ -14,13 +15,13 @@ const dialogflowClient = new dialogflow.SessionsClient({
   },
 });
 
-exports.postDialogFlow = async (event) => {
+exports.postDialogFlow = async (query, sessionId) => {
   let message;
   const request = {
-    session: dialogflowClient.sessionPath(dialogflowConfig.projectId, event.source.userId),
+    session: dialogflowClient.sessionPath(dialogflowConfig.projectId, sessionId),
     queryInput: {
       text: {
-        text: event.message.text,
+        text: query,
         languageCode: 'ja',
       },
     },
@@ -28,7 +29,7 @@ exports.postDialogFlow = async (event) => {
 
   await dialogflowClient
     .detectIntent(request)
-    .then((responses) => {
+    .then(async (responses) => {
       console.log(`Detect Intent: ${JSON.stringify(responses, null, 4)}`);
       const result = responses[0].queryResult;
       console.log(`QueryText: ${result.queryText}`);
@@ -37,10 +38,17 @@ exports.postDialogFlow = async (event) => {
         console.log('  No intent matched.');
         return;
       }
-      message = result.fulfillmentText;
+      console.log(result.action);
+      // DialogFlowで判別できない場合、responses.queryResult.actionがこの値になる。
+      if (result.action === 'input.unknown') {
+        message = await naturalDialogue.main(query);
+      } else {
+        message = result.fulfillmentText;
+      }
     })
     .catch((err) => {
       console.error('ERROR', err);
     });
+  console.log(message);
   return message;
 };

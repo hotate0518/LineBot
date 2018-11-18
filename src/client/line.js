@@ -27,15 +27,20 @@ exports.assignService = (event) => {
     .createHmac('sha256', lineConfig.channelSecret)
     .update(event.body)
     .digest('base64');
+  console.log(signature);
   // LINEサーバから送られたHeaderの値を取得する。
   const header = (event.headers || {})['X-Line-Signature'];
   // headerの値と、取得したハッシュ値が一致した場合、受信先がLINEサーバであると判定する。
   return signature === header;
 };
 
+/**
+ * AIサービスにぶん投げたあと、リプライする
+ * @param {*} param クライアントから受信したイベント
+ */
 const execute = async (param) => {
   console.log('Start Line Promise');
-  const result = await dialogFlow.postDialogFlow(param);
+  const result = await dialogFlow.postDialogFlow(param.message.text, param.source.userId);
   console.log(`DialogFlow result: ${result}`);
   if (result === null) {
     return;
@@ -47,6 +52,9 @@ const execute = async (param) => {
   lineClient.replyMessage(param.replyToken, message);
 };
 
+/**
+ * LINEメインサービス
+ */
 exports.main = (event, context) => {
   const body = JSON.parse(event.body);
   // ハッシュと、ヘッダの値を比較し、一致した場合のみ処理を行う。（一致した場合→LINEサーバかどうかの認証成功）

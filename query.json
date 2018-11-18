@@ -1,0 +1,21 @@
+{
+  "language": "ja-JP",
+  "botId": "チャット",
+  "appId": "68886c30-76f2-4541-9ed7-fcdfbaadac0f",
+  "voiceText": "こんにちは",
+  "clientData":{
+  "option":{
+    "nickname": "light",
+    "ニックネームY": "ヒカリ",
+    "セックス": "女性",
+    "bloodtype": "B",
+    "birthdateY": "1997",
+    "birthdateM": "5",
+    "birthdateD": "30",
+    "星座": "ジェミニ",
+    "mode": "dialog"
+    }
+  },
+  "appRecvTime": "2015-05-05 13:30:00",
+  "appSendTime": "2015-05-05 13:31:00"
+}
