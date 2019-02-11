@@ -7,7 +7,7 @@ const naturalDialogueConfig = {
 };
 
 /**
- * 自然対話APIを使うために使用するアプリIDを取得する。
+ * 自然対話APIを使うために使用するアプリIDを取得する
  */
 const getAppId = async () => {
   const response = await axios.post(`https://api.apigw.smt.docomo.ne.jp/naturalChatting/v1/registration?APIKEY=${naturalDialogueConfig.apiKey}`,
